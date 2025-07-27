@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: company-service
+  namespace: stock-news
+  labels:
+    app: company-service
+spec:
+  selector:
+    app: company-service
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: ClusterIP

@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: stock-news
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+    
+    rule_files:
+      - "stock_news_rules.yml"
+    
+    scrape_configs:
+    - job_name: 'kubernetes-pods'
+      kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+          - stock-news
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+    
+    - job_name: 'stock-news-services'
+      static_configs:
+      - targets:
+        - 'company-service:8000'
+        - 'news-service:8000'
+        - 'notification-service:8000'
+      metrics_path: '/metrics'
+      scrape_interval: 30s
+    
+    - job_name: 'postgresql'
+      static_configs:
+      - targets: ['postgresql:5432']
+    
+    - job_name: 'rabbitmq'
+      static_configs:
+      - targets: ['rabbitmq:15692']
+  
+  stock_news_rules.yml: |
+    groups:
+    - name: stock_news_alerts
+      rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.instance }} is down"
+      
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+      
+      - alert: DatabaseConnectionFailed
+        expr: postgresql_up == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL database is unreachable"

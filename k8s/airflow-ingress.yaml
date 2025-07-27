@@ -1,0 +1,22 @@
+# airflow-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: airflow-ingress
+  namespace: stock-news
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /airflow/$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: stock-news.local
+    http:
+      paths:
+      - path: /airflow(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: airflow-webserver
+            port:
+              number: 8080

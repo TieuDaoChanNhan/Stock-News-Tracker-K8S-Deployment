@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: news-service
+  namespace: stock-news
+  labels:
+    app: news-service
+spec:
+  selector:
+    app: news-service
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  type: ClusterIP

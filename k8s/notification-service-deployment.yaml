@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: stock-news
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      initContainers:
+      - name: setup-watchlist
+        image: tieudaochannhan/notification-service:latest
+        command: ["python", "setup_watchlist.py"]
+        env:
+        - name: NOTIFICATION_DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: notification-db-url
+        - name: TELEGRAM_BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: notification-secrets
+              key: telegram-bot-token
+        - name: TELEGRAM_CHAT_ID_DEFAULT
+          valueFrom:
+            secretKeyRef:
+              name: notification-secrets
+              key: telegram-chat-id
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "0.1"
+          limits:
+            memory: "256Mi"
+            cpu: "0.5"
+      containers:
+      - name: notification-service
+        image: tieudaochannhan/notification-service:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: NOTIFICATION_DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: notification-db-url
+        - name: TELEGRAM_BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: notification-secrets
+              key: telegram-bot-token
+        - name: TELEGRAM_CHAT_ID_DEFAULT
+          valueFrom:
+            secretKeyRef:
+              name: notification-secrets
+              key: telegram-chat-id
+        - name: RABBITMQ_URL
+          valueFrom:
+            secretKeyRef:
+              name: queue-secrets
+              key: rabbitmq-url
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "0.1"
+          limits:
+            memory: "512Mi"
+            cpu: "0.25"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      restartPolicy: Always

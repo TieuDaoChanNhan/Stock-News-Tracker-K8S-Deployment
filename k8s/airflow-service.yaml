@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-webserver
+  namespace: stock-news
+  labels:
+    app: airflow-webserver
+spec:
+  selector:
+    app: airflow-webserver
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow-scheduler
+  namespace: stock-news
+  labels:
+    app: airflow-scheduler
+spec:
+  selector:
+    app: airflow-scheduler
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  type: ClusterIP

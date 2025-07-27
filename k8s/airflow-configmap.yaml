@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airflow-dags-config
+  namespace: stock-news
+data:
+  stock_news_scheduler.py: |
+    from airflow import DAG
+    from airflow.operators.bash import BashOperator
+    from airflow.utils.dates import days_ago
+    from datetime import timedelta
+
+    default_args = {
+        'owner': 'stock-news-team',
+        'depends_on_past': False,
+        'start_date': days_ago(1),
+        'email_on_failure': False,
+        'email_on_retry': False,
+        'retries': 1,
+        'retry_delay': timedelta(minutes=5),
+    }
+
+    dag = DAG(
+        'stock_news_scheduler',
+        default_args=default_args,
+        description='Schedule news crawling and financial data fetching every 4 hours',
+        schedule_interval=timedelta(hours=4),
+        catchup=False,
+        max_active_runs=1,
+        tags=['stock-news', 'scheduler'],
+        is_paused_upon_creation=False,
+    )
+
+    # News Service Scheduler Task
+    news_scheduler_task = BashOperator(
+        task_id='news_service_scheduler',
+        bash_command='curl -X POST http://news-service:8000/api/v1/news-scheduler/run',
+        dag=dag,
+    )
+
+    # Company Service Scheduler Task
+    company_scheduler_task = BashOperator(
+        task_id='company_service_scheduler',
+        bash_command='curl -X POST http://company-service:8000/api/v1/companies-scheduler/run',
+        dag=dag,
+    )
+
+    # Set task dependencies (có thể chạy parallel)
+    news_scheduler_task
+    company_scheduler_task

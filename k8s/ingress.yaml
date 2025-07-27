@@ -1,0 +1,159 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stock-news-ingress
+  namespace: stock-news
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: stock-news.local
+    http:
+      paths:
+      # --- STATIC FILES EXPLICIT PATHS ---
+      - path: /manifest.json
+        pathType: Exact
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+      - path: /AssetManifest.bin
+        pathType: Exact
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+      - path: /AssetManifest.bin.json
+        pathType: Exact
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+      - path: /version.json
+        pathType: Exact
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+      - path: /flutter_service_worker.js
+        pathType: Exact
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+      - path: /flutter_bootstrap.js
+        pathType: Exact
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+      
+      # --- COMPANY API PATHS ---
+      - path: /api/v1/companies
+        pathType: Prefix
+        backend:
+          service:
+            name: company-service  # Route tùy theo API endpoint
+            port:
+              number: 8000
+
+      - path: /api/v1/companies-scheduler
+        pathType: Prefix
+        backend:
+          service:
+            name: company-service  # Route tùy theo API endpoint
+            port:
+              number: 8000
+
+      # --- NEWS API PATHS ---
+      - path: /api/v1/ai-analysis
+        pathType: Prefix
+        backend:
+          service:
+            name: news-service  # Route tùy theo API endpoint
+            port:
+              number: 8000
+      
+      - path: /api/v1/articles
+        pathType: Prefix
+        backend:
+          service:
+            name: news-service  # Route tùy theo API endpoint
+            port:
+              number: 8000
+      
+      - path: /api/v1/crawl-sources
+        pathType: Prefix
+        backend:
+          service:
+            name: news-service  # Route tùy theo API endpoint
+            port:
+              number: 8000
+
+      - path: /api/v1/news-scheduler
+        pathType: Prefix
+        backend:
+          service:
+            name: news-service  # Route tùy theo API endpoint
+            port:
+              number: 8000
+
+      # --- NOTIFICATION API PATHS ---
+      - path: /api/v1/users/ong_x/watchlist
+        pathType: Prefix
+        backend:
+          service:
+            name: company-service  # Route tùy theo API endpoint
+            port:
+              number: 8000
+      
+      # --- MONITORING ---
+      - path: /prometheus
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus
+            port:
+              number: 9090
+      - path: /grafana
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000
+      - path: /rabbitmq
+        pathType: Prefix
+        backend:
+          service:
+            name: rabbitmq
+            port:
+              number: 15672
+      
+      # # --- Airflow UI ---
+      # - path: /airflow
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: airflow-webserver
+      #       port:
+      #         number: 8080
+      
+      # --- SPA FALLBACK ---
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80

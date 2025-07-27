@@ -346,8 +346,8 @@ kubectl apply -f k8s/nfs-storage-class.yaml
 
 #### **Step 4: Configure Secrets**
 ```bash
-# Create secrets file
-cp k8s/secrets.yaml.example k8s/secrets.yaml
+# Edit secrets file with your API, URL, ...
+nano k8s/secrets.yaml
 
 # Edit with actual API keys (base64 encoded)
 echo -n "your_fmp_api_key" | base64

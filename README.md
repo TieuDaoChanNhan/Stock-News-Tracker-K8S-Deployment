@@ -869,31 +869,6 @@ watch kubectl get pods -n stock-news
 ```
 
 
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-### Development Setup
-
-```bash
-# 1. Fork và clone repository
-git clone https://github.com/yourusername/stock-news-tracking-system.git
-cd stock-news-tracking-system
-
-# 2. Create development branch
-git checkout -b feature/your-feature-name
-
-# 3. Setup pre-commit hooks
-pip install pre-commit
-pre-commit install
-
-# 4. Make changes và test locally
-./scripts/run-tests.sh
-
-# 5. Submit pull request
-```
-
-
 ### Code Style
 
 - **Python**: Follow PEP 8, use `black` formatter

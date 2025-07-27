@@ -272,23 +272,33 @@ TELEGRAM_CHAT_ID=your_telegram_chat_id
 
 ```bash
 #1. Clone repository
-git clone https://github.com/yourusername/stock-news-tracking-system.git
+git clone https://github.com/tieudaochannhan/stock-news-tracking-system.git
 cd stock-news-tracking-system/microservices
 
-#2. Configure API keys
-cp k8s/secrets.yaml.example k8s/secrets.yaml
-# Edit k8s/secrets.yaml with your API keys
+#2. Login to your docker hub
+docker login
 
-# 3. Run automated deployment script
+#3. Reset current k8s status, swapoff, flannel installation
+kubeadm reset -f
+swapoff -a
+kubeadm init --pod-network-cidr=10.244.0.0/16
+export KUBECONFIG=/etc/kubernetes/admin.conf
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+
+#4. Run automated deployment script
 chmod +x k8s/deploy.sh
 ./k8s/deploy.sh
 
-#4. Wait for deployment (5-10 minutes)
+#5. Wait for deployment (5-10 minutes)
 kubectl get pods -n stock-news -w
 
-#5. Access applications
+#6. Port Forward to 8082 for production
+kubectl port-forward -n ingress-nginx service/ingress-nginx-controller 8082:80
+
+#7. Access applications
 echo "127.0.0.1 stock-news.local" | sudo tee -a /etc/hosts
-open http://localhost:8082 # or http://stock-news.local:8082
+open http://localhost:8082  or http://stock-news.local:8082
 ```
 
 

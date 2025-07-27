@@ -19,8 +19,6 @@
 7. [API Documentation](#-api-documentation)
 8. [Monitoring](#-monitoring)
 9. [Troubleshooting](#-troubleshooting)
-10. [Contributing](#-contributing)
-11. [License](#-license)
 
 ## 🎯 Overview
 

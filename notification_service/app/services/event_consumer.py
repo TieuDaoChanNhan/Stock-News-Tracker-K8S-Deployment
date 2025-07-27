@@ -1,6 +1,7 @@
+import os
 import json
 import asyncio
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from aio_pika import connect_robust, IncomingMessage
 from aio_pika.exceptions import AMQPException
 import logging
@@ -11,10 +12,17 @@ from app.services.watchlist_service import check_and_process_article_notificatio
 logger = logging.getLogger(__name__)
 
 class EventConsumer:
-    def __init__(self, rabbitmq_url: str = "amqp://guest:guest@localhost:5672/"):
-        self.rabbitmq_url = rabbitmq_url
+    def __init__(self, rabbitmq_url: Optional[str] = None):
+        # Đọc từ environment variable, fallback to service name
+        self.rabbitmq_url = (
+            rabbitmq_url or 
+            os.getenv('RABBITMQ_URL') or 
+            os.getenv('AMQP_URL') or 
+            "amqp://guest:guest@rabbitmq:5672/"  
+        )
         self.connection = None
         self.channel = None
+        logger.info(f"🔧 EventConsumer using RabbitMQ URL: {self.rabbitmq_url}")
         
     async def connect(self):
         """Kết nối đến RabbitMQ"""

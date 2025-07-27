@@ -1,3 +1,4 @@
+import os
 import json
 import asyncio
 from typing import Optional
@@ -8,10 +9,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 class EventPublisher:
-    def __init__(self, rabbitmq_url: str = "amqp://guest:guest@localhost:5672/"):
-        self.rabbitmq_url = rabbitmq_url
+    def __init__(self, rabbitmq_url: Optional[str] = None):
+        # Đọc từ environment variable, fallback to service name
+        self.rabbitmq_url = (
+            rabbitmq_url or 
+            os.getenv('RABBITMQ_URL') or 
+            os.getenv('AMQP_URL') or 
+            "amqp://guest:guest@rabbitmq:5672/"  #
+        )
         self.connection = None
         self.channel = None
+        logger.info(f"🔧 EventPublisher using RabbitMQ URL: {self.rabbitmq_url}")
         
     async def connect(self):
         """Kết nối đến RabbitMQ"""

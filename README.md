@@ -891,10 +891,6 @@ pre-commit install
 - **YAML**: 2-space indentation
 - **Commit messages**: Use conventional commits format
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🙏 Acknowledgments
 
 - **Financial Modeling Prep** for financial data API

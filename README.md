@@ -47,16 +47,16 @@ The system is built with **cloud-native architecture**, deployed on **Kubernetes
 │           │                                                     │
 │  ┌────────▼───────────────────────────────────────────────────┐ │
 │  │                 MICROSERVICES LAYER                        │ │
-│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐   │ │
-│  │  │  COMPANY    │ │    NEWS     │ │    NOTIFICATION     │   │ │
-│  │  │   SERVICE   │ │   SERVICE   │ │      SERVICE        │   │ │
-│  │  │ Port: 8000  │ │ Port: 8000  │ │     Port: 8000      │   │ │
-│  │  │             │ │             │ │                     │   │ │
-│  │  │ • Financial │ │ • News      │ │ • User watchlist    │   │ │
-│  │  │   Metrics   │ │   Crawling  │ │ • Telegram          │   │ │
-│  │  │ • FMP API   │ │ • AI        │ │   Notifications     │   │ │
-│  │  │   Integratio│ │   Analysis  │ │ • Keywords          │   │ │
-│  │  └─────────────┘ └─────────────┘ └─────────────────────┘   │ │
+│  │  ┌──────────────┐ ┌─────────────┐ ┌─────────────────────┐  │ │
+│  │  │  COMPANY     │ │    NEWS     │ │    NOTIFICATION     │  │ │
+│  │  │   SERVICE    │ │   SERVICE   │ │      SERVICE        │  │ │
+│  │  │ Port: 8000   │ │ Port: 8000  │ │     Port: 8000      │  │ │
+│  │  │              │ │             │ │                     │  │ │
+│  │  │ • Financial  │ │ • News      │ │ • User watchlist    │  │ │
+│  │  │   Metrics    │ │   Crawling  │ │ • Telegram          │  │ │
+│  │  │ • FMP API    │ │ • AI        │ │   Notifications     │  │ │
+│  │  │   Integration│ │   Analysis  │ │ • Keywords          │  │ │
+│  │  └──────────────┘ └─────────────┘ └─────────────────────┘  │ │
 │  └────────────────────────────────────────────────────────────┘ │
 │           │                    │                    │           │
 │  ┌────────▼────────────────────▼────────────────────▼─────────┐ │
@@ -76,16 +76,16 @@ The system is built with **cloud-native architecture**, deployed on **Kubernetes
 │  │                 AUTOMATION LAYER                            ││
 │  │  ┌─────────────┐              ┌─────────────────────────┐   ││
 │  │  │   AIRFLOW   │              │      MONITORING         │   ││
-│  │  │  Scheduler  │              │  ┌─────────┐ ┌────────┐ │   ││
+│  │  │  Scheduler  │              │  ┌──────────┐ ┌────────┐│   ││
 │  │  │Port: 8080   │              │  │PROMETHEUS│ │GRAFANA ││   ││
 │  │  │             │              │  │Port:9090 │ │Port:3K ││   ││
-│  │  │ • Auto      │              │  └─────────┘ └────────┘ │   ││
+│  │  │ • Auto      │              │  └──────────┘ └────────┘│   ││
 │  │  │   Crawling  │              │                         │   ││
 │  │  │ • Metrics   │              │ • Resource monitoring   │   ││
 │  │  │   Fetching  │              │ • Custom dashboards     │   ││
 │  │  │ • Every 4h  │              │ • Alerting              │   ││
 │  │  └─────────────┘              └─────────────────────────┘   ││
-│  └──────────────────────────────────────────────────────────── ┘│
+│  └─────────────────────────────────────────────────────────────┘│
 │                                                                 │
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │                    STORAGE LAYER                           │ │

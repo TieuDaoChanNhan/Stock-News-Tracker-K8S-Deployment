@@ -70,7 +70,7 @@ async def run_news_scheduler():
                     summary_selector=source.summary_selector,
                     date_selector=source.date_selector,
                     source_name=source.name,
-                    max_articles=5
+                    max_articles=1
                 )
                 
                 # Lưu articles vào database

@@ -69,8 +69,8 @@ async def create_article(db: Session, article: schemas.ArticleCreate) -> models.
         if not ai_summary and not full_analysis:
             db_ai_analysis = ai_analysis_model.ArticleAIAnalysis(
                 article_id=db_article.id,
-                ai_summary="",                 # Chuỗi rỗng thay vì None
-                category="",                   # Không có phân loại
+                summary="",                 # Chuỗi rỗng thay vì None
+                category="Không rõ",                   # Không có phân loại
                 sentiment_score=0.0,           # Mặc định trung lập
                 impact_score=0.0,              # Mặc định 0
                 keywords_extracted="[]",       # JSON rỗng
@@ -79,7 +79,7 @@ async def create_article(db: Session, article: schemas.ArticleCreate) -> models.
         else:
             db_ai_analysis = ai_analysis_model.ArticleAIAnalysis(
                 article_id=db_article.id,
-                ai_summary=ai_summary or "",  # Nếu None thì rỗng
+                summary=ai_summary or "",  # Nếu None thì rỗng
             )
 
             if full_analysis:

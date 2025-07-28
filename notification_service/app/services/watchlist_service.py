@@ -1,11 +1,10 @@
+import html
 from typing import Dict, Any, List
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.crud.watchlist_crud import get_watchlist_items_by_user
-from app.services.notification_service import (
-    send_telegram_message_sync, 
-    escape_markdown_v2
-)
+from app.services.notification_service import send_telegram_message_sync
+
 
 async def check_and_process_article_notification(event_data: Dict[str, Any]):
     """Kiểm tra watchlist và gửi thông báo dựa trên event data"""
@@ -77,74 +76,117 @@ async def check_and_process_article_notification(event_data: Dict[str, Any]):
     finally:
         db.close()
 
+
 def create_keyword_notification_message(
     event_data: Dict[str, Any], 
     ai_analysis: Dict[str, Any], 
     matched_keywords_list: List[str]
 ) -> str:
-    """Tạo message cho thông báo triggered keywords"""
+    """Tạo message cho thông báo triggered keywords - Beautiful HTML Format"""
     
     # Extract data
     category = ai_analysis.get('category', 'Tin tức') if ai_analysis else 'Tin tức'
-    sentiment_text = ai_analysis.get('sentiment_text', 'N/A') if ai_analysis else 'N/A'
-    impact_text = ai_analysis.get('impact_text', 'N/A') if ai_analysis else 'N/A'
-    analysis_summary = ai_analysis.get('analysis_summary', '') if ai_analysis else ''
+    sentiment_text = ai_analysis.get('sentiment_text', 'Trung tính') if ai_analysis else 'Trung tính'
+    impact_text = ai_analysis.get('impact_text', 'Thấp') if ai_analysis else 'Thấp'
+    analysis_summary = ai_analysis.get('analysis_summary', 'Không có phân tích') if ai_analysis else 'Không có phân tích'
     
-    # Escape markdown
-    escaped_category = escape_markdown_v2(category.upper())
-    escaped_impact = escape_markdown_v2(impact_text)
-    escaped_sentiment = escape_markdown_v2(sentiment_text)
-    escaped_keywords = escape_markdown_v2(', '.join(matched_keywords_list))
-    escaped_title = escape_markdown_v2(event_data['title'])
-    escaped_analysis = escape_markdown_v2(analysis_summary)
-    escaped_url = escape_markdown_v2(event_data['url'])
+    # HTML escape
+    escaped_category = html.escape(category)
+    escaped_impact = html.escape(impact_text)
+    escaped_sentiment = html.escape(sentiment_text)
+    escaped_keywords = html.escape(', '.join(matched_keywords_list))
+    escaped_title = html.escape(event_data['title'])
+    escaped_analysis = html.escape(analysis_summary)
     
-    # Format message
-    message_parts = [
-        f"🎯 *WATCHLIST ALERT*",
-        f"📂 {escaped_category} \\| 📊 {escaped_impact} \\| 💭 {escaped_sentiment}",
-        f"🔍 Từ khóa: *{escaped_keywords}*",
-        "\\-\\-\\-",
-        f"*{escaped_title}*",
-        f"_{escaped_analysis}_",
-        "",
-        f"[Đọc ngay]({escaped_url})"
-    ]
+    # Chọn emoji theo sentiment
+    sentiment_emoji = {
+        'Tích cực': '📈',
+        'Tiêu cực': '📉', 
+        'Trung tính': '📊'
+    }.get(sentiment_text, '📊')
     
-    return "\n".join(message_parts)
+    # Chọn emoji theo impact
+    impact_emoji = {
+        'Cao': '🔥',
+        'Trung bình': '⚡',
+        'Thấp': '💡'
+    }.get(impact_text, '💡')
+    
+    # 🎨 Beautiful HTML Format
+    message = f"""🎯 <b>WATCHLIST ALERT</b>
+
+🏷️ <b>Từ khóa:</b> <code>{escaped_keywords}</code>
+📂 <b>Danh mục:</b> {escaped_category}
+{impact_emoji} <b>Tác động:</b> {escaped_impact}
+{sentiment_emoji} <b>Tâm lý:</b> {escaped_sentiment}
+
+━━━━━━━━━━━━━━━━━━━━
+
+📰 <b>{escaped_title}</b>
+
+🤖 <i>{escaped_analysis}</i>
+
+<a href="{event_data['url']}">📖 Đọc chi tiết →</a>
+
+<i>⏰ Stock News Tracker Bot</i>"""
+    
+    return message
+
 
 def create_impact_notification_message(
     event_data: Dict[str, Any], 
     ai_analysis: Dict[str, Any]
 ) -> str:
-    """Tạo message cho thông báo high impact"""
+    """Tạo message cho thông báo high impact - Beautiful HTML Format"""
     
     # Extract data
     category = ai_analysis.get('category', 'Tin tức') if ai_analysis else 'Tin tức'
-    sentiment_text = ai_analysis.get('sentiment_text', 'N/A') if ai_analysis else 'N/A'
-    impact_text = ai_analysis.get('impact_text', 'N/A') if ai_analysis else 'N/A'
-    analysis_summary = ai_analysis.get('analysis_summary', '') if ai_analysis else ''
+    sentiment_text = ai_analysis.get('sentiment_text', 'Trung tính') if ai_analysis else 'Trung tính'
+    impact_text = ai_analysis.get('impact_text', 'Cao') if ai_analysis else 'Cao'
+    analysis_summary = ai_analysis.get('analysis_summary', 'Không có phân tích') if ai_analysis else 'Không có phân tích'
+    impact_score = ai_analysis.get('impact_score', 0.0) if ai_analysis else 0.0
     
-    # Escape markdown
-    escaped_category = escape_markdown_v2(category.upper())
-    escaped_impact = escape_markdown_v2(impact_text)
-    escaped_sentiment = escape_markdown_v2(sentiment_text)
-    escaped_title = escape_markdown_v2(event_data['title'])
-    escaped_analysis = escape_markdown_v2(analysis_summary)
-    escaped_url = escape_markdown_v2(event_data['url'])
+    # HTML escape
+    escaped_category = html.escape(category)
+    escaped_impact = html.escape(impact_text)
+    escaped_sentiment = html.escape(sentiment_text)
+    escaped_title = html.escape(event_data['title'])
+    escaped_analysis = html.escape(analysis_summary)
     
     # Chọn emoji theo impact level
-    impact_emoji = "🔥" if impact_text == "Cao" else "⚡"
+    if impact_score >= 0.8:
+        impact_emoji = "🚨"
+        alert_level = "KHẨN CẤP"
+    elif impact_score >= 0.7:
+        impact_emoji = "🔥"
+        alert_level = "CAO"
+    else:
+        impact_emoji = "⚡"
+        alert_level = "TRUNG BÌNH"
     
-    # Format message
-    message_parts = [
-        f"{impact_emoji} *TIN TỨC TÁC ĐỘNG {escaped_impact.upper()}*",
-        f"📂 {escaped_category} \\| 💭 {escaped_sentiment}",
-        "\\-\\-\\-",
-        f"*{escaped_title}*",
-        f"_{escaped_analysis}_",
-        "",
-        f"[Đọc ngay]({escaped_url})"
-    ]
+    # Chọn emoji theo sentiment
+    sentiment_emoji = {
+        'Tích cực': '📈',
+        'Tiêu cực': '📉', 
+        'Trung tính': '📊'
+    }.get(sentiment_text, '📊')
     
-    return "\n".join(message_parts)
+    # 🎨 Beautiful HTML Format
+    message = f"""{impact_emoji} <b>TIN TỨC TÁC ĐỘNG {alert_level}</b>
+
+📊 <b>Điểm ảnh hưởng:</b> <code>{impact_score:.2f}/1.0</code>
+📂 <b>Danh mục:</b> {escaped_category}
+{sentiment_emoji} <b>Tâm lý thị trường:</b> {escaped_sentiment}
+
+━━━━━━━━━━━━━━━━━━━━
+
+📰 <b>{escaped_title}</b>
+
+🔍 <i>Phân tích AI:</i>
+<i>{escaped_analysis}</i>
+
+<a href="{event_data['url']}">📖 Đọc ngay để cập nhật thông tin →</a>
+
+<i>🤖 Stock News AI Analysis Bot</i>"""
+    
+    return message

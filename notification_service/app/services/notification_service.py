@@ -1,6 +1,7 @@
 import os
 import asyncio
 import logging
+import html
 from typing import Optional, List
 from dotenv import load_dotenv
 import concurrent.futures
@@ -23,19 +24,29 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID_DEFAULT")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def escape_markdown_v2(text: str) -> str:
-    """Escape special characters for Telegram MarkdownV2"""
-    # Danh sách đầy đủ các ký tự cần escape theo Telegram API docs
-    special_chars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+# Log configuration status (không expose sensitive data)
+if BOT_TOKEN:
+    logger.info(f"🔧 Telegram bot token configured (length: {len(BOT_TOKEN)})")
+else:
+    logger.error("❌ TELEGRAM_BOT_TOKEN not configured")
+
+if CHAT_ID:
+    logger.info(f"🔧 Telegram chat ID configured: {CHAT_ID}")
+else:
+    logger.error("❌ TELEGRAM_CHAT_ID_DEFAULT not configured")
+
+
+def escape_html(text: str) -> str:
+    """Escape HTML special characters for Telegram HTML parsing"""
+    if not text:
+        return ""
     
-    # Escape từng ký tự
-    for char in special_chars:
-        text = text.replace(char, f'\\{char}')
-    
-    return text
+    # HTML escape để tránh conflict với HTML tags
+    return html.escape(text)
+
 
 async def send_telegram_message_async(message: str, target_chat_id: Optional[str] = None):
-    """Gửi tin nhắn Telegram (async)"""
+    """Gửi tin nhắn Telegram (async) - HTML Format"""
     if not telegram:
         logger.error("❌ python-telegram-bot chưa được cài đặt")
         return False
@@ -43,7 +54,7 @@ async def send_telegram_message_async(message: str, target_chat_id: Optional[str
     chat_id = target_chat_id or CHAT_ID
     
     if not BOT_TOKEN:
-        logger.error("❌ TELEGRAM_BOT_TOKEN không được cấu hình trong .env")
+        logger.error("❌ TELEGRAM_BOT_TOKEN không được cấu hình")
         return False
     
     if not chat_id:
@@ -56,8 +67,9 @@ async def send_telegram_message_async(message: str, target_chat_id: Optional[str
             await bot.send_message(
                 chat_id=chat_id,
                 text=message,
-                parse_mode='MarkdownV2',
-                disable_web_page_preview=False
+                parse_mode='HTML',  # 🔄 CHUYỂN SANG HTML
+                disable_web_page_preview=False,
+                disable_notification=False
             )
         
         logger.info(f"✅ Đã gửi thông báo Telegram đến {chat_id}")
@@ -70,8 +82,9 @@ async def send_telegram_message_async(message: str, target_chat_id: Optional[str
         logger.error(f"❌ Lỗi không xác định: {e}")
         return False
 
+
 def send_telegram_message_sync(message: str, target_chat_id: Optional[str] = None):
-    """Gửi tin nhắn Telegram (sync wrapper) - SỬA LỖI EVENT LOOP"""
+    """Gửi tin nhắn Telegram (sync wrapper) - Fixed Event Loop"""
     try:
         # Kiểm tra xem có event loop đang chạy không
         try:
@@ -90,35 +103,50 @@ def send_telegram_message_sync(message: str, target_chat_id: Optional[str] = Non
         logger.error(f"❌ Lỗi khi gửi tin nhắn sync: {e}")
         return False
 
+
 def format_news_notification(article_title: str, article_url: str, matched_keywords: List[str]) -> str:
-    """Format tin nhắn thông báo tin tức"""
-    # Escape markdown cho title và URL
-    escaped_title = escape_markdown_v2(article_title)
-    escaped_url = escape_markdown_v2(article_url)
+    """Format tin nhắn thông báo tin tức - HTML Beautiful Format"""
     
-    # Tạo danh sách keywords
+    # HTML escape cho title và keywords (URL không cần escape)
+    escaped_title = escape_html(article_title)
     keywords_str = ", ".join(matched_keywords)
-    escaped_keywords = escape_markdown_v2(keywords_str)
+    escaped_keywords = escape_html(keywords_str)
     
-    # Format message
-    message = f"""🔔 *Tin mới liên quan đến* \\[{escaped_keywords}\\]\\!
+    # 🎨 Beautiful HTML Format
+    message = f"""📢 <b>TIN TỨC MỚI</b>
 
-*{escaped_title}*
+🎯 <b>Từ khóa quan tâm:</b> <code>{escaped_keywords}</code>
 
-[Đọc ngay]({escaped_url})"""
+📰 <b>{escaped_title}</b>
+
+<a href="{article_url}">📖 Đọc chi tiết →</a>
+
+<i>🤖 Stock News Tracker Bot</i>"""
     
     return message
 
-# Test function
+
+def format_test_message() -> str:
+    """Format test message - HTML Beautiful Format"""
+    message = f"""🧪 <b>TEST CONNECTION</b>
+
+✅ <i>Kết nối thành công từ Stock News Tracker Bot!</i>
+
+🤖 <code>System Status: Online</code>"""
+    
+    return message
+
+
 def test_telegram_connection():
-    """Test kết nối Telegram"""
-    test_message = "🧪 Test kết nối từ Stock News Tracker\\!"
+    """Test kết nối Telegram với HTML format"""
+    test_message = format_test_message()
     result = send_telegram_message_sync(test_message)
     if result:
         print("✅ Kết nối Telegram thành công!")
     else:
         print("❌ Kết nối Telegram thất bại!")
     return result
+
 
 if __name__ == "__main__":
     test_telegram_connection()

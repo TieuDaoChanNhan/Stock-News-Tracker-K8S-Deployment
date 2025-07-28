@@ -10,6 +10,10 @@ from app.models import ai_analysis_model
 from app.crud import ai_analysis_crud  
 from app.services import gemini_service
 from app.services.event_publisher import event_publisher
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def get_article_by_url(db: Session, url: str) -> Optional[models.Article]:
     """Lấy article theo URL"""
@@ -29,12 +33,12 @@ async def create_article(db: Session, article: schemas.ArticleCreate) -> models.
     # Kiểm tra trùng lặp
     existing_article_by_url = get_article_by_url(db, url=article.url)
     if existing_article_by_url:
-        print(f"📄 Article đã tồn tại (URL): {article.title[:50]}...")
+        logger.info(f"📄 Article đã tồn tại (URL): {article.title[:50]}...")
         return existing_article_by_url
     
     existing_article_by_hash = get_article_by_content_hash(db, content_hash=content_hash)
     if existing_article_by_hash:
-        print(f"📄 Article đã tồn tại (Content): {article.title[:50]}...")
+        logger.info(f"📄 Article đã tồn tại (Content): {article.title[:50]}...")
         return existing_article_by_hash
     
     # Tạo article mới
@@ -46,12 +50,12 @@ async def create_article(db: Session, article: schemas.ArticleCreate) -> models.
     db.commit()
     db.refresh(db_article)
     
-    print(f"✅ Tạo article mới: {article.title[:50]}...")
+    logger.info(f"✅ Tạo article mới: {article.title[:50]}...")
     
     # **PHÂN TÍCH AI VỚI GEMINI**
     ai_analysis_data = None
     try:
-        print(f"🤖 Đang phân tích bài viết bằng Gemini...")
+        logger.info(f"🤖 Đang phân tích bài viết bằng Gemini...")
         
         # 1. Tóm tắt
         ai_summary = gemini_service.summarize_article_with_gemini(
@@ -65,9 +69,8 @@ async def create_article(db: Session, article: schemas.ArticleCreate) -> models.
             content=db_article.summary or ""
         )
 
-        # Nếu cả hai đều rỗng/None thì set toàn bộ thành giá trị mặc định
-        if not ai_summary and not full_analysis:
-            db_ai_analysis = ai_analysis_model.ArticleAIAnalysis(
+        #Tạo rỗng data trước
+        db_ai_analysis = ai_analysis_model.ArticleAIAnalysis(
                 article_id=db_article.id,
                 summary="",                 # Chuỗi rỗng thay vì None
                 category="Không rõ",                   # Không có phân loại
@@ -76,28 +79,22 @@ async def create_article(db: Session, article: schemas.ArticleCreate) -> models.
                 keywords_extracted="[]",       # JSON rỗng
                 analysis_metadata="{}"         # Metadata rỗng
             )
-        else:
+        
+        if ai_summary:
             db_ai_analysis = ai_analysis_model.ArticleAIAnalysis(
                 article_id=db_article.id,
                 summary=ai_summary or "",  # Nếu None thì rỗng
             )
 
-            if full_analysis:
-                db_ai_analysis.category = full_analysis.get("category", "")
-                sentiment_map = {"Tích cực": 1.0, "Trung tính": 0.0, "Tiêu cực": -1.0}
-                db_ai_analysis.sentiment_score = sentiment_map.get(full_analysis.get("sentiment"), 0.0)
-                impact_map = {"Cao": 1.0, "Trung bình": 0.5, "Thấp": 0.1}
-                db_ai_analysis.impact_score = impact_map.get(full_analysis.get("impact_level"), 0.0)
-                db_ai_analysis.keywords_extracted = json.dumps(full_analysis.get("key_entities", []), ensure_ascii=False)
-                db_ai_analysis.analysis_metadata = json.dumps(full_analysis, ensure_ascii=False)
-            else:
-                db_ai_analysis.category = ""
-                db_ai_analysis.sentiment_score = 0.0
-                db_ai_analysis.impact_score = 0.0
-                db_ai_analysis.keywords_extracted = "[]"
-                db_ai_analysis.analysis_metadata = "{}"
+        if full_analysis:
+            db_ai_analysis.category = full_analysis.get("category", "")
+            sentiment_map = {"Tích cực": 1.0, "Trung tính": 0.0, "Tiêu cực": -1.0}
+            db_ai_analysis.sentiment_score = sentiment_map.get(full_analysis.get("sentiment"), 0.0)
+            impact_map = {"Cao": 1.0, "Trung bình": 0.5, "Thấp": 0.1}
+            db_ai_analysis.impact_score = impact_map.get(full_analysis.get("impact_level"), 0.0)
+            db_ai_analysis.keywords_extracted = json.dumps(full_analysis.get("key_entities", []), ensure_ascii=False)
+            db_ai_analysis.analysis_metadata = json.dumps(full_analysis, ensure_ascii=False)
 
-        
         # 5. Lưu AI analysis
         db.add(db_ai_analysis)
         db.commit()
@@ -114,10 +111,10 @@ async def create_article(db: Session, article: schemas.ArticleCreate) -> models.
             "impact_text": full_analysis.get("impact_level", "") if full_analysis else ""
         }
         
-        print(f"✅ Đã lưu AI analysis với ID: {db_ai_analysis.id}")
+        logger.info(f"✅ Đã lưu AI analysis với ID: {db_ai_analysis.id}")
         
     except Exception as e:
-        print(f"⚠️ Lỗi khi phân tích AI: {e}")
+        logger.info(f"⚠️ Lỗi khi phân tích AI: {e}")
         ai_analysis_data = None
     
     # **PUBLISH EVENT THAY VÌ DIRECT CALL**
@@ -137,10 +134,10 @@ async def create_article(db: Session, article: schemas.ArticleCreate) -> models.
         
         # Publish event async
         await event_publisher.publish_article_created(event_data)
-        print(f"📤 Đã publish event cho article: {db_article.title[:50]}...")
+        logger.info(f"📤 Đã publish event cho article: {db_article.title[:50]}...")
         
     except Exception as e:
-        print(f"⚠️ Lỗi khi publish event: {e}")
+        logger.info(f"⚠️ Lỗi khi publish event: {e}")
         # Vẫn return article dù publish event thất bại
     
     return db_article

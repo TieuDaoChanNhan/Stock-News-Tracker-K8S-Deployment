@@ -6,9 +6,14 @@ from app.crud import crawl_source_crud, article_crud
 from app.services.generic_crawler import scrape_news_from_website
 from app.schemas.article_schema import ArticleCreate
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 async def fetch_and_process_all_active_sources():
     """Fetch và process tin tức từ các nguồn đang hoạt động"""
-    print(f"\n🕐 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - Bắt đầu chu kỳ crawl tin tức...")
+    logger.info(f"\n🕐 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - Bắt đầu chu kỳ crawl tin tức...")
     
     db = SessionLocal()
     total_articles = 0
@@ -16,11 +21,11 @@ async def fetch_and_process_all_active_sources():
     try:
         # Lấy danh sách nguồn crawl active
         sources = crawl_source_crud.get_active_crawl_sources(db)
-        print(f"📊 Tìm thấy {len(sources)} nguồn đang hoạt động.")
+        logger.info(f"📊 Tìm thấy {len(sources)} nguồn đang hoạt động.")
         
         for source in sources:
             try:
-                print(f"🔄 Crawling: {source.name}")
+                logger.info(f"🔄 Crawling: {source.name}")
                 
                 # Crawl articles từ nguồn
                 articles_data = scrape_news_from_website(
@@ -50,7 +55,7 @@ async def fetch_and_process_all_active_sources():
                         total_articles += 1
                         
                     except Exception as e:
-                        print(f"   ❌ Lỗi khi lưu article: {e}")
+                        logger.info(f"   ❌ Lỗi khi lưu article: {e}")
                         continue
                 
                 # Cập nhật thời gian crawl cuối
@@ -59,23 +64,23 @@ async def fetch_and_process_all_active_sources():
                 )
                 
             except Exception as e:
-                print(f"❌ Lỗi khi crawl {source.name}: {e}")
+                logger.info(f"❌ Lỗi khi crawl {source.name}: {e}")
                 continue
         
-        print(f"✅ Hoàn thành chu kỳ crawl: {total_articles} articles đã được xử lý")
+        logger.info(f"✅ Hoàn thành chu kỳ crawl: {total_articles} articles đã được xử lý")
         
     finally:
         db.close()
 
 def main():
     """Main function để chạy một lần"""
-    print("🚀 News Service Scheduler - Single Run")
-    print("=" * 60)
+    logger.info("🚀 News Service Scheduler - Single Run")
+    logger.info("=" * 60)
     
     # Chạy async function
     asyncio.run(fetch_and_process_all_active_sources())
     
-    print("✅ News Service Scheduler completed!")
+    logger.info("✅ News Service Scheduler completed!")
 
 if __name__ == "__main__":
     main()

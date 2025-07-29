@@ -5,6 +5,10 @@ import html
 from typing import Optional, List
 from dotenv import load_dotenv
 import concurrent.futures
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -14,7 +18,7 @@ try:
     import telegram
     from telegram.error import TelegramError
 except ImportError:
-    print("⚠️ Cần cài đặt: pip install python-telegram-bot")
+    logger.info("⚠️ Cần cài đặt: pip install python-telegram-bot")
     telegram = None
 
 # Cấu hình
@@ -142,9 +146,9 @@ def test_telegram_connection():
     test_message = format_test_message()
     result = send_telegram_message_sync(test_message)
     if result:
-        print("✅ Kết nối Telegram thành công!")
+        logger.info("✅ Kết nối Telegram thành công!")
     else:
-        print("❌ Kết nối Telegram thất bại!")
+        logger.info("❌ Kết nối Telegram thất bại!")
     return result
 
 

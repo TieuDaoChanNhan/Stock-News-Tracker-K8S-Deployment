@@ -6,6 +6,10 @@ from typing import List
 from app.database import SessionLocal, init_db
 from app.crud import company_crud as crud
 from app.schemas import company_schema as schemas
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def setup_popular_companies() -> List[str]:
     """Setup initial companies for company service"""
@@ -33,25 +37,25 @@ def setup_popular_companies() -> List[str]:
     added_symbols = []
     
     try:
-        print("🏢 COMPANY SERVICE: Setting up initial companies...")
+        logger.info("🏢 COMPANY SERVICE: Setting up initial companies...")
         
         for company_data in popular_companies:
             try:
                 existing = crud.get_company_by_symbol(db, company_data['symbol'])
                 if existing:
-                    print(f"   ⚠️ {company_data['symbol']} already exists, skipping...")
+                    logger.info(f"   ⚠️ {company_data['symbol']} already exists, skipping...")
                     continue
                 
                 company_create = schemas.CompanyCreate(**company_data)
                 db_company = crud.create_company(db, company_create)
                 added_symbols.append(company_data['symbol'])
-                print(f"   ✅ Added {company_data['symbol']} - {company_data['company_name']}")
+                logger.info(f"   ✅ Added {company_data['symbol']} - {company_data['company_name']}")
                 
             except Exception as e:
-                print(f"   ❌ Error adding {company_data['symbol']}: {e}")
+                logger.info(f"   ❌ Error adding {company_data['symbol']}: {e}")
                 continue
         
-        print(f"🎉 Company setup completed: {len(added_symbols)} companies added")
+        logger.info(f"🎉 Company setup completed: {len(added_symbols)} companies added")
         return added_symbols
         
     finally:
@@ -59,8 +63,8 @@ def setup_popular_companies() -> List[str]:
 
 def main():
     """Main setup function for company service"""
-    print("🚀 Company Service - Initial Setup")
-    print("=" * 50)
+    logger.info("🚀 Company Service - Initial Setup")
+    logger.info("=" * 50)
     
     # Initialize database
     init_db()
@@ -71,7 +75,7 @@ def main():
     # Set environment variable to mark setup as complete
     os.environ['COMPANY_SETUP_COMPLETE'] = 'true'
     
-    print("✅ Company Service setup completed successfully!")
+    logger.info("✅ Company Service setup completed successfully!")
 
 if __name__ == "__main__":
     main()

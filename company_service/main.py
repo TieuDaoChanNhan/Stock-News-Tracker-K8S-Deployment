@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 from app.database import init_db
 from app.endpoints import company_endpoints, scheduler_endpoints
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Company Service",
@@ -10,7 +14,7 @@ app = FastAPI(
 
 @app.on_event("startup")
 def on_startup():
-    print("🚀 Khởi động Company Service...")
+    logger.info("🚀 Khởi động Company Service...")
     init_db()
 
 # Thêm router của service này

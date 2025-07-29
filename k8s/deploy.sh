@@ -123,6 +123,8 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/cont
 print_status "Waiting for Ingress Controller to be ready..."
 kubectl wait --namespace ingress-nginx --for=condition=ready pod --selector=app.kubernetes.io/component=controller --timeout=300s
 kubectl apply -f k8s/ingress.yaml
+kubectl apply -f k8s/airflow-ingress.yaml
+kubectl apply -f k8s/monitoring-ingress.yaml
 
 # --- Final Health Checks ---
 print_status "Waiting for all services to be ready..."

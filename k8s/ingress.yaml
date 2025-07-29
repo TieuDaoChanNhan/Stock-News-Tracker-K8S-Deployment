@@ -113,32 +113,32 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: company-service  # Route tùy theo API endpoint
+            name: notification-service
             port:
               number: 8000
       
       # --- MONITORING ---
-      - path: /prometheus
-        pathType: Prefix
-        backend:
-          service:
-            name: prometheus
-            port:
-              number: 9090
-      - path: /grafana
-        pathType: Prefix
-        backend:
-          service:
-            name: grafana
-            port:
-              number: 3000
-      - path: /rabbitmq
-        pathType: Prefix
-        backend:
-          service:
-            name: rabbitmq
-            port:
-              number: 15672
+      # - path: /prometheus
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: prometheus
+      #       port:
+      #         number: 9090
+      # - path: /grafana
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: grafana
+      #       port:
+      #         number: 3000
+      # - path: /rabbitmq
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: rabbitmq
+      #       port:
+      #         number: 15672
       
       # # --- Airflow UI ---
       # - path: /airflow

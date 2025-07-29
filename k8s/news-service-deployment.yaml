@@ -4,7 +4,7 @@ metadata:
   name: news-service
   namespace: stock-news
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: news-service

@@ -4,6 +4,10 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.crud.watchlist_crud import get_watchlist_items_by_user
 from app.services.notification_service import send_telegram_message_sync
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 async def check_and_process_article_notification(event_data: Dict[str, Any]):
@@ -12,13 +16,13 @@ async def check_and_process_article_notification(event_data: Dict[str, Any]):
     db = SessionLocal()
     
     try:
-        print(f"🔍 Processing notification for article: {event_data['title']}")
+        logger.info(f"🔍 Processing notification for article: {event_data['title']}")
         
         # Lấy watchlist của user
         watchlist_items = get_watchlist_items_by_user(db, user_id='ong_x')
         
         if not watchlist_items:
-            print("🔍 No watchlist items found")
+            logger.info("🔍 No watchlist items found")
             return
         
         triggered_keywords = set()
@@ -42,7 +46,7 @@ async def check_and_process_article_notification(event_data: Dict[str, Any]):
         # **ĐIỀU KIỆN 1: CÓ TRIGGERED KEYWORDS**
         if triggered_keywords:
             matched_keywords_list = list(triggered_keywords)
-            print(f"🔔 Found match with watchlist: {matched_keywords_list}")
+            logger.info(f"🔔 Found match with watchlist: {matched_keywords_list}")
             
             message = create_keyword_notification_message(
                 event_data, ai_analysis, matched_keywords_list
@@ -51,28 +55,28 @@ async def check_and_process_article_notification(event_data: Dict[str, Any]):
             success = send_telegram_message_sync(message=message)
             
             if success:
-                print(f"✅ Sent KEYWORD notification for: {matched_keywords_list}")
+                logger.info(f"✅ Sent KEYWORD notification for: {matched_keywords_list}")
             else:
-                print(f"❌ Failed to send KEYWORD notification")
+                logger.info(f"❌ Failed to send KEYWORD notification")
         
         # **ĐIỀU KIỆN 2: HIGH IMPACT (0.5+)**
         elif impact_score >= 0.5:
-            print(f"📊 High impact article: {ai_analysis.get('impact_text', 'N/A')} (score: {impact_score})")
+            logger.info(f"📊 High impact article: {ai_analysis.get('impact_text', 'N/A')} (score: {impact_score})")
             
             message = create_impact_notification_message(event_data, ai_analysis)
             
             success = send_telegram_message_sync(message=message)
             
             if success:
-                print(f"✅ Sent HIGH IMPACT notification")
+                logger.info(f"✅ Sent HIGH IMPACT notification")
             else:
-                print(f"❌ Failed to send HIGH IMPACT notification")
+                logger.info(f"❌ Failed to send HIGH IMPACT notification")
         
         else:
-            print("🔍 No notification criteria met")
+            logger.info("🔍 No notification criteria met")
             
     except Exception as e:
-        print(f"❌ Error processing notification: {e}")
+        logger.info(f"❌ Error processing notification: {e}")
     finally:
         db.close()
 

@@ -3,6 +3,10 @@ import asyncio
 from app.database import init_db
 from app.endpoints import watchlist_endpoints
 from app.services.event_consumer import event_consumer
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Notification Service",
@@ -12,16 +16,16 @@ app = FastAPI(
 
 @app.on_event("startup")    
 async def on_startup():
-    print("🚀 Khởi động Notification Service...")
+    logger.info("🚀 Khởi động Notification Service...")
     init_db()
     
     # Start event consumer trong background task
     asyncio.create_task(event_consumer.start_consuming())
-    print("🔄 Event consumer started")
+    logger.info("🔄 Event consumer started")
 
 @app.on_event("shutdown")
 async def on_shutdown():
-    print("👋 Shutting down Notification Service...")
+    logger.info("👋 Shutting down Notification Service...")
     await event_consumer.close()
 
 # Thêm router

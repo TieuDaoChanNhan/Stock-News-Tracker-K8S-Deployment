@@ -3,6 +3,10 @@ import sys
 from app.database import SessionLocal, init_db
 from app.crud import watchlist_crud as crud
 from app.schemas import watchlist_schema as schemas
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def setup_default_watchlist():
     """Setup default watchlist for notification service"""
@@ -34,12 +38,12 @@ def setup_default_watchlist():
     added_items = []
     
     try:
-        print("🔔 NOTIFICATION SERVICE: Setting up default watchlist...")
+        logger.info("🔔 NOTIFICATION SERVICE: Setting up default watchlist...")
         
         # Check if user already has watchlist
         existing_items = crud.get_watchlist_items_by_user(db, USER_ID)
         if existing_items:
-            print(f"   ⚠️ User {USER_ID} already has {len(existing_items)} watchlist items, skipping...")
+            logger.info(f"   ⚠️ User {USER_ID} already has {len(existing_items)} watchlist items, skipping...")
             return [item.item_value for item in existing_items]
         
         for item_data in sample_watchlist:
@@ -47,13 +51,13 @@ def setup_default_watchlist():
                 item_create = schemas.WatchlistItemCreate(**item_data)
                 db_item = crud.create_watchlist_item(db, item_create, USER_ID)
                 added_items.append(item_data['item_value'])
-                print(f"   ✅ Added {item_data['item_value']} ({item_data['item_type']})")
+                logger.info(f"   ✅ Added {item_data['item_value']} ({item_data['item_type']})")
                 
             except Exception as e:
-                print(f"   ❌ Error adding {item_data['item_value']}: {e}")
+                logger.info(f"   ❌ Error adding {item_data['item_value']}: {e}")
                 continue
         
-        print(f"🎉 Watchlist setup completed: {len(added_items)} items added for user {USER_ID}")
+        logger.info(f"🎉 Watchlist setup completed: {len(added_items)} items added for user {USER_ID}")
         return added_items
         
     finally:
@@ -61,8 +65,8 @@ def setup_default_watchlist():
 
 def main():
     """Main setup function for notification service"""
-    print("🚀 Notification Service - Initial Setup")
-    print("=" * 50)
+    logger.info("🚀 Notification Service - Initial Setup")
+    logger.info("=" * 50)
     
     # Initialize database
     init_db()
@@ -73,7 +77,7 @@ def main():
     # Set environment variable to mark setup as complete
     os.environ['NOTIFICATION_SETUP_COMPLETE'] = 'true'
     
-    print("✅ Notification Service setup completed successfully!")
+    logger.info("✅ Notification Service setup completed successfully!")
     return len(added_items) > 0
 
 if __name__ == "__main__":

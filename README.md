@@ -641,9 +641,9 @@ curl http://localhost:8082/api/v1/companies-scheduler/status
 
 Visit these URLs for interactive Swagger documentation:
 
-- **Company Service**: `http://localhost:8082/api/v1/docs` (port-forward to 8001)
+- **Company Service**: `http://localhost:8082/api/v1/docs` (port-forward to 8002)
 - **News Service**: `http://localhost:8082/api/v1/docs` (port-forward to 8002)
-- **Notification Service**: `http://localhost:8082/api/v1/docs` (port-forward to 8003)
+- **Notification Service**: `http://localhost:8082/api/v1/docs` (port-forward to 8002)
 
 
 ## 📊 Monitoring
